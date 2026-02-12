@@ -17,7 +17,8 @@ REQUIRED_FIELDS = [
     ("Conta", ['Número da conta', 'Numero da conta', 'Conta vinculada']),
     ("Vencimento", ['Vencimento', 'Data Vencimento']),
     ("Referência", ['Mês de Referência', 'Mes Referencia']),
-    ("Total a Pagar", ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'])
+    ("Total a Pagar", ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total']),
+    ("Dados Bancários", ['Dados bancários', 'Dados bancarios', 'Pagamento']) # ADICIONADO PARA COLUNA AD
 ]
 
 def sanitize_text(text):
@@ -30,12 +31,9 @@ def sanitize_text(text):
     text = str(text)
     
     # Normalização NFKC (compatibilidade) converte caracteres "exóticos" em seus equivalentes padrão
-    # Ex: ⁹ -> 9, ½ -> 1/2
     normalized = unicodedata.normalize('NFKC', text)
     
-    # Remove caracteres de controle não imprimíveis, mas mantém acentos (Latin-1 safe)
-    # Apenas removemos o que realmente pode quebrar (p/ xhtml2pdf, o set ASCII + Latin1 costuma ser ok,
-    # mas aqui vamos manter o unicode limpo)
+    # Mantém caracteres imprimíveis e remove controles que quebram o PDF
     clean = "".join(ch for ch in normalized if unicodedata.category(ch)[0] != "C")
     
     return clean.strip()
@@ -45,12 +43,9 @@ def format_currency(val):
         if pd.isna(val) or str(val).strip() == "": return "R$ 0,00"
         val_str = str(val).strip()
         
-        # Lógica para detectar formato
         if ',' in val_str and '.' in val_str: 
-            # 1.000,00 -> 1000.00
             clean = val_str.replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
         elif ',' in val_str: 
-            # 1000,00 -> 1000.00
             clean = val_str.replace('R$', '').replace(' ', '').replace(',', '.')
         else: 
             clean = val_str.replace('R$', '').strip()
@@ -85,7 +80,6 @@ def validate_columns(df):
     columns_present = df.columns.tolist()
     
     for friendly_name, options in REQUIRED_FIELDS:
-        # Verifica se pelo menos uma das opções existe nas colunas
         if not any(opt in columns_present for opt in options):
             missing.append(f"{friendly_name} (Colunas aceitas: {', '.join(options)})")
             
@@ -93,13 +87,11 @@ def validate_columns(df):
 
 def prepare_context(row):
     """
-    Prepara o dicionário de contexto para o Jinja2 e Preview,
-    buscando valores nas colunas possíveis e sanitizando texto.
+    Prepara o dicionário de contexto para o Jinja2 e Preview.
     """
     def get(keys, default=""):
         for key in keys:
             if key in row.index and pd.notna(row[key]):
-                # Aplica limpeza/sanitização em cada campo extraído
                 raw_val = str(row[key]).replace('\n', ' ')
                 return sanitize_text(raw_val)
         return default
@@ -119,10 +111,11 @@ def prepare_context(row):
         "mes_referencia": get(['Mês de Referência', 'Mes Referencia']),
         "total_pagar": format_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'], '0')),
         "economia_mes": format_currency(get(['Economia R$', 'Economia mês'], '0')),
-        "dados_bancarios": get(['Dados bancários', 'Dados bancarios'], '')
+        
+        # GARANTE QUE OS DADOS BANCÁRIOS (COLUNA AD) SEJAM MAPEADOS
+        "dados_bancarios": get(['Dados bancários', 'Dados bancarios'], 'Não Informado')
     }
     
-    # Campo Raw para cálculos externos (não vai pro PDF, mas útil se precisasse)
     ctx["_raw_total"] = parse_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'], '0'))
     
     return ctx
