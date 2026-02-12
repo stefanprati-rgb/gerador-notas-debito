@@ -15,6 +15,21 @@
         .item-row td { padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .total-row td { border-top: 2px solid #000; border-bottom: 1px solid #000; font-weight: bold; background-color: #f2f2f2; padding: 6px; font-size: 10pt; }
         .text-right { text-align: right; }
+        
+        /* Box de Dados Bancários Destacado */
+        .bank-box { 
+            border: 2px solid #000; 
+            background-color: #f9f9f9; 
+            padding: 10px; 
+            margin-top: 20px;
+        }
+        .bank-content { 
+            font-family: monospace; 
+            font-size: 10pt; 
+            font-weight: bold; 
+            color: #000; 
+            white-space: pre-line; /* Mantém quebras de linha se houver no CSV */
+        }
     </style>
 </head>
 <body>
@@ -81,7 +96,6 @@
             <tr class="item-row">
                 <td>
                     <b>SERVIÇO LOC. OUTR. MÁQ. EQUIP. PLAC. FOTOVOLT.</b><br>
-                    <span style="font-size: 8pt; color: #666;"><b>Conta para Depósito: {{ numero_conta }}</b></span><br>
                     <span style="font-size: 8pt; color: #666;">Economia Gerada: {{ economia_mes }}</span>
                 </td>
                 <td class="text-right value">{{ total_pagar }}</td>
@@ -95,12 +109,19 @@
             <td class="text-right" width="25%">{{ total_pagar }}</td>
         </tr>
     </table>
-    <div style="border: 1px solid #ccc; background-color: #f9f9f9; padding: 10px;">
-        <div class="label" style="color: #000; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">Número da Conta</div>
-        <div style="font-family: monospace; font-size: 12pt; font-weight: bold; color: #000;">{{ numero_conta }}</div>
-        <div style="margin-top: 8px; font-size: 7pt; color: #666;">
-            * Caso o pagamento não seja efetuado até o vencimento, incidirá multa e juros conforme contrato.
+
+    <div class="bank-box">
+        <div class="label" style="color: #000; border-bottom: 1px solid #000; margin-bottom: 8px; padding-bottom: 2px; font-size: 8pt;">
+            Dados para Pagamento (IMPORTANTE)
         </div>
+        <div class="bank-content">{{ dados_bancarios }}</div>
+        <div style="margin-top: 12px; font-size: 7pt; color: #444; font-style: italic;">
+            * Por favor, confira os dados acima antes de realizar a transferência ou agendamento.
+        </div>
+    </div>
+
+    <div style="margin-top: 15px; font-size: 7pt; color: #666; text-align: center;">
+        Caso o pagamento não seja efetuado até o vencimento, incidirá multa e juros conforme contrato.
     </div>
 </body>
 </html>
