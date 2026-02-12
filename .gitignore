@@ -208,4 +208,5 @@ __marimo__/
 
 # Project Specific
 *.zip
+.streamlit/
 

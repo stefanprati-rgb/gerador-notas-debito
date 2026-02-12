@@ -13,6 +13,46 @@ import re
 # ==========================================
 st.set_page_config(page_title="Hube Emissor", layout="centered", page_icon="⚡")
 
+# ==========================================
+# 🔒 SISTEMA DE LOGIN SEGURO
+# ==========================================
+def check_password():
+    """Retorna True se o login for bem-sucedido."""
+
+    # 1. Verifica se já está logado na sessão
+    if st.session_state.get("password_correct", False):
+        return True
+
+    # 2. Interface de Login
+    st.markdown("### 🔒 Acesso Restrito - Hube Energy")
+    
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+
+    if st.button("Entrar"):
+        # Busca as credenciais no "Cofre" (Secrets)
+        # O formato esperado no cofre é: [passwords] usuario = "senha"
+        
+        try:
+            secrets_pass = st.secrets["passwords"]
+            
+            # Verifica se usuario existe e senha bate
+            if usuario in secrets_pass and secrets_pass[usuario] == senha:
+                st.session_state["password_correct"] = True
+                st.success("Logado com sucesso!")
+                st.rerun() # Recarrega a página para mostrar o app
+            else:
+                st.error("Usuário ou senha incorretos.")
+        except Exception:
+            st.warning("⚠️ O sistema de senhas não foi configurado no servidor.")
+            
+    return False
+
+# 🛑 BARREIRA DE SEGURANÇA
+# Se não estiver logado, o script PARA aqui e não mostra nada abaixo.
+if not check_password():
+    st.stop()
+
 st.markdown("""
 <style>
     .stButton>button { width: 100%; font-weight: bold; font-size: 18px; padding: 15px; }
