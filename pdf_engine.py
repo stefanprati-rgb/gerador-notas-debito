@@ -5,19 +5,21 @@ from pathlib import Path
 
 from typing import List
 
-def list_templates() -> List[str]:
+def list_templates():
     """
-    Lista os arquivos de template HTML disponíveis na pasta templates/.
-    Ignora arquivos ocultos ou que iniciam com underscore.
+    Lista arquivos .html dentro da pasta templates/.
+    Retorna lista ordenada alfabeticamente.
     """
-    templates_dir = Path(__file__).parent / "templates"
+    templates_dir = Path("templates")
+
     if not templates_dir.exists():
         return []
-    
+
     templates = [
         f.name for f in templates_dir.glob("*.html")
-        if not f.name.startswith((".", "_"))
+        if not f.name.startswith(".")
     ]
+
     return sorted(templates)
 
 def get_html_template(template_name: str):
