@@ -20,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# TEMPLATE HTML (ATUALIZADO: RODAPÉ COM NÚMERO DA CONTA)
+# TEMPLATE HTML (CABEÇALHO LIMPO - SEM QUADRADOS)
 # ==========================================
 def get_html_template():
     return """
@@ -59,7 +59,7 @@ def get_html_template():
             font-weight: bold;
             text-transform: uppercase;
             text-align: right;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
         
         .label {
@@ -75,20 +75,10 @@ def get_html_template():
             font-weight: bold;
             color: #000;
             display: block;
-            margin-bottom: 2px; 
+            margin-bottom: 5px; 
         }
 
-        /* BOX DE DESTAQUE PARA CONTA (NOVO) */
-        .account-highlight {
-            border: 2px solid #000; 
-            background-color: #f4f4f4; 
-            padding: 8px;
-            margin-top: 5px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        /* Caixa Principal */
+        /* Caixa Principal (Destinatário) */
         .main-box {
             border: 1px solid #000;
             margin-top: 5px;
@@ -137,12 +127,11 @@ def get_html_template():
             <td width="45%" class="text-right">
                 <div class="header-title">Aviso de Débito</div>
                 
-                <div class="account-highlight">
-                    <span class="label" style="color: #000; font-size: 8pt;">NÚMERO DA CONTA (PAGAMENTO)</span>
-                    <span class="value" style="font-size: 13pt; margin-top: 3px;">{{ numero_conta }}</span>
+                <div style="margin-top: 5px;">
+                    <span class="label">Número da Conta</span>
+                    <span class="value">{{ numero_conta }}</span>
                 </div>
-
-                <div style="margin-top: 2px;">
+                <div style="margin-top: 5px;">
                     <span class="label">Nº da Cobrança</span>
                     <span class="value">{{ numero_cobranca }}</span>
                 </div>
@@ -277,7 +266,7 @@ def prepare_context(row):
         "mes_referencia": get(['Mês de Referência', 'Mes Referencia']),
         "total_pagar": format_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'], '0')),
         "economia_mes": format_currency(get(['Economia R$', 'Economia mês'], '0')),
-        "dados_bancarios": get(['Dados bancários', 'Dados bancarios'], 'Verifique boleto anexo')
+        "dados_bancarios": get(['Dados bancários', 'Dados bancarios'], '')
     }
 
 def generate_pdf(html):
@@ -290,7 +279,7 @@ def generate_pdf(html):
 # UI
 # ==========================================
 st.title("⚡ Hube | Gerador de Notas")
-st.info("Layout Final: Rodapé com Número da Conta")
+st.info("Layout Ajustado: Cabeçalho limpo (sem quadrados).")
 
 uploaded_file = st.file_uploader("Upload da Base (.xlsx ou .csv)", type=["xlsx", "csv"])
 
