@@ -258,8 +258,10 @@ def get_html_template():
 """
 
 # ==========================================
-# LÓGICA DE DADOS
+# LÓGICA DE DADOS E SEGURANÇA (LGPD)
 # ==========================================
+# NOTA: Este sistema processa dados sensíveis (CNPJ/CPF) apenas em memória (RAM).
+# Nenhum dado é salvo permanentemente no servidor. O processamento é efêmero.
 
 def format_currency(val):
     try:
@@ -310,6 +312,13 @@ def prepare_context(row):
     }
 
 def generate_pdf(html):
+    """
+    Converte HTML para PDF usando xhtml2pdf.
+    Erros comuns de layout:
+    1. Caracteres especiais/emojis não suportados pelas fontes do pisa.
+    2. Imagens com caminhos relativos inválidos.
+    3. CSS avançado (Flexbox/Grid) não suportado pelo motor reporte-lab.
+    """
     buffer = BytesIO()
     pisa_status = pisa.CreatePDF(html, dest=buffer)
     if pisa_status.err: return None, f"Erro layout: {pisa_status.err}"
