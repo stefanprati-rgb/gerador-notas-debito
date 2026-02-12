@@ -4,6 +4,7 @@ from io import BytesIO
 import zipfile
 from datetime import datetime
 from jinja2 import Template
+import base64
 
 # Importando módulos refatorados
 from utils import (
@@ -15,7 +16,7 @@ from utils import (
     prepare_context,
     REQUIRED_FIELDS
 )
-from pdf_engine import get_html_template, generate_pdf
+from pdf_engine import get_html_template, generate_pdf, list_templates
 
 # ==========================================
 # CONFIGURAÇÃO VISUAL
@@ -129,10 +130,70 @@ if uploaded_file:
 
         # 4. Geração
         st.write("---")
+
+        # Seleção de Template
+        templates_disponiveis = list_templates()
+        if not templates_disponiveis:
+             st.error("Nenhum template encontrado na pasta templates/!")
+             st.stop()
+        
+        template_escolhido = st.selectbox("Modelo de Nota", templates_disponiveis)
+
+        st.write("---")
+        st.subheader("👁️ Visualizar PDF (Teste)")
+        
+        col_prev1, col_prev2 = st.columns([1, 2])
+        with col_prev1:
+            row_idx = st.number_input("Linha para preview (1 a {})".format(len(df)), min_value=1, max_value=len(df), value=1)
+        with col_prev2:
+            st.write("") # Spacer layou
+            st.write("") 
+            btn_preview = st.button("Gerar Preview PDF")
+
+        if btn_preview:
+            try:
+                # Pega a linha (ajustando índice base 0)
+                selected_row = df.iloc[row_idx - 1]
+                
+                # Prepara contexto e HTML
+                ctx = prepare_context(selected_row)
+                html_template_string = get_html_template(template_escolhido)
+                html = Template(html_template_string).render(ctx)
+                
+                # Gera PDF
+                pdf_bytes, err = generate_pdf(html)
+                
+                if err:
+                    st.error(f"Erro ao gerar preview: {err}")
+                else:
+                    st.success("Preview gerado com sucesso!")
+                    
+                    # 1. Download Button
+                    st.download_button(
+                        label="📥 Baixar PDF de Preview",
+                        data=pdf_bytes,
+                        file_name=f"Preview_Linha_{row_idx}.pdf",
+                        mime="application/pdf"
+                    )
+                    
+                    # 2. Exibição na tela (iframe)
+                    base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+                    st.markdown(pdf_display, unsafe_allow_html=True)
+
+            except Exception as e:
+                st.error(f"Erro no preview: {e}")
+
+        st.write("---")
+
         # Se houver preview, o usuário vê e decide clicar
-        if st.button("Gerar Notas", type="primary"):
+        if st.button("Gerar Todas as Notas (ZIP)", type="primary"):
+            html_template_string = get_html_template(template_escolhido)
+            template_jinja = Template(html_template_string)
+
             zip_buffer = BytesIO()
             erros = []
+            relatorio = []
             sucesso = 0
             bar = st.progress(0)
             status_text = st.empty()
@@ -141,9 +202,17 @@ if uploaded_file:
                 total_rows = len(df)
                 for i, row in df.iterrows():
                     status_text.text(f"Processando {i+1}/{total_rows}...")
+                    
+                    # Variáveis para Log
+                    log_razao = "Desconhecido"
+                    log_cobranca = "N/A"
+                    
                     try:
                         ctx = prepare_context(row)
-                        html = Template(get_html_template()).render(ctx)
+                        log_razao = ctx.get('razao_social', 'Desconhecido')
+                        log_cobranca = ctx.get('numero_cobranca', 'N/A')
+
+                        html = template_jinja.render(ctx)
                         pdf, err = generate_pdf(html)
                         
                         if pdf:
@@ -155,12 +224,45 @@ if uploaded_file:
                             filename = f"NOTA_{nome}_{venc}_{id_unico}.pdf"
                             zf.writestr(filename, pdf)
                             sucesso += 1
+                            
+                            relatorio.append({
+                                "linha_planilha": i + 2,
+                                "razao_social": log_razao,
+                                "numero_cobranca": log_cobranca,
+                                "status": "SUCESSO",
+                                "mensagem_erro": "",
+                                "nome_arquivo_pdf": filename
+                            })
                         else:
-                            erros.append(f"Linha {i+2} ({ctx.get('razao_social', 'Sem Nome')}): {err}")
+                            msg_erro = f"Erro layout: {err}"
+                            erros.append(f"Linha {i+2} ({log_razao}): {err}")
+                            relatorio.append({
+                                "linha_planilha": i + 2,
+                                "razao_social": log_razao,
+                                "numero_cobranca": log_cobranca,
+                                "status": "ERRO",
+                                "mensagem_erro": msg_erro,
+                                "nome_arquivo_pdf": ""
+                            })
+
                     except Exception as e:
-                        erros.append(f"Linha {i+2}: {str(e)}")
+                        msg_erro = str(e)
+                        erros.append(f"Linha {i+2}: {msg_erro}")
+                        relatorio.append({
+                            "linha_planilha": i + 2,
+                            "razao_social": log_razao,
+                            "numero_cobranca": log_cobranca,
+                            "status": "ERRO",
+                            "mensagem_erro": msg_erro,
+                            "nome_arquivo_pdf": ""
+                        })
                     
                     bar.progress((i+1)/total_rows)
+
+                # Gera CSV de relatório e inclui no ZIP
+                if relatorio:
+                    csv_data = pd.DataFrame(relatorio).to_csv(index=False, sep=";", encoding="utf-8-sig")
+                    zf.writestr("relatorio_processamento.csv", csv_data)
             
             status_text.empty()
             bar.empty()

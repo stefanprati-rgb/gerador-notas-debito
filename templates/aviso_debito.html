@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4; margin: 1cm; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #000; line-height: 1.2; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        td { vertical-align: top; padding: 4px; word-wrap: break-word; }
+        .header-title { font-size: 14pt; font-weight: bold; text-transform: uppercase; text-align: right; margin-bottom: 10px; }
+        .label { font-size: 7pt; font-weight: bold; text-transform: uppercase; color: #444; display: block; }
+        .value { font-size: 9pt; font-weight: bold; color: #000; display: block; margin-bottom: 5px; }
+        .main-box { border: 1px solid #000; margin-top: 5px; margin-bottom: 15px; }
+        .items-header th { border-top: 1px solid #000; border-bottom: 1px solid #000; text-align: left; padding: 4px; font-size: 8pt; background-color: #f2f2f2; }
+        .item-row td { padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .total-row td { border-top: 2px solid #000; border-bottom: 1px solid #000; font-weight: bold; background-color: #f2f2f2; padding: 6px; font-size: 10pt; }
+        .text-right { text-align: right; }
+    </style>
+</head>
+<body>
+    <table>
+        <tr>
+            <td width="55%">
+                <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">{{ nome_consorcio }}</div>
+                <div style="margin-top: 4px;">{{ endereco_consorcio }}</div>
+                <div>CNPJ: {{ cnpj_consorcio }}</div>
+            </td>
+            <td width="45%" class="text-right">
+                <div class="header-title">Aviso de Débito</div>
+                <div style="margin-top: 5px;">
+                    <span class="label">Número da Conta</span>
+                    <span class="value">{{ numero_conta }}</span>
+                </div>
+                <div style="margin-top: 5px;">
+                    <span class="label">Nº da Cobrança</span>
+                    <span class="value">{{ numero_cobranca }}</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div class="main-box">
+        <table cellpadding="0" cellspacing="0">
+            <tr>
+                <td width="60%" style="border-right: 1px solid #000; padding: 8px;">
+                    <div style="border-bottom: 1px dashed #ccc; padding-bottom: 6px; margin-bottom: 6px;">
+                        <span class="label">Natureza da Operação:</span> <span>Locação de Equipamentos</span><br>
+                        <span class="label">Código:</span> <span>98569</span>
+                    </div>
+                    <div>
+                        <span class="label">DESTINATÁRIO (CONSORCIADO)</span>
+                        <div class="value" style="font-size: 10pt;">{{ razao_social }}</div>
+                        <div style="font-size: 9pt;">{{ endereco_consorciado }}</div>
+                        <div style="font-size: 9pt;">CNPJ/CPF: {{ cnpj_consorciado }}</div>
+                    </div>
+                </td>
+                <td width="40%" style="padding: 8px;">
+                    <div style="margin-bottom: 8px;">
+                        <span class="label">Data Emissão</span>
+                        <span class="value">{{ data_emissao }}</span>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <span class="label">Vencimento</span>
+                        <span class="value" style="font-size: 11pt; color: #cc0000;">{{ data_vencimento }}</span>
+                    </div>
+                    <div>
+                        <span class="label">Referência</span>
+                        <span class="value">{{ mes_referencia }}</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <table>
+        <thead class="items-header">
+            <tr>
+                <th width="75%">DISCRIMINAÇÃO DOS SERVIÇOS</th>
+                <th width="25%" class="text-right">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="item-row">
+                <td>
+                    <b>SERVIÇO LOC. OUTR. MÁQ. EQUIP. PLAC. FOTOVOLT.</b><br>
+                    <span style="font-size: 8pt; color: #666;"><b>Conta para Depósito: {{ numero_conta }}</b></span><br>
+                    <span style="font-size: 8pt; color: #666;">Economia Gerada: {{ economia_mes }}</span>
+                </td>
+                <td class="text-right value">{{ total_pagar }}</td>
+            </tr>
+             <tr><td colspan="2" style="height: 20px;"></td></tr>
+        </tbody>
+    </table>
+    <table style="margin-bottom: 20px;">
+        <tr class="total-row">
+            <td class="text-right" width="75%">TOTAL A PAGAR</td>
+            <td class="text-right" width="25%">{{ total_pagar }}</td>
+        </tr>
+    </table>
+    <div style="border: 1px solid #ccc; background-color: #f9f9f9; padding: 10px;">
+        <div class="label" style="color: #000; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">Número da Conta</div>
+        <div style="font-family: monospace; font-size: 12pt; font-weight: bold; color: #000;">{{ numero_conta }}</div>
+        <div style="margin-top: 8px; font-size: 7pt; color: #666;">
+            * Caso o pagamento não seja efetuado até o vencimento, incidirá multa e juros conforme contrato.
+        </div>
+    </div>
+</body>
+</html>
