@@ -176,10 +176,8 @@ if uploaded_file:
                         mime="application/pdf"
                     )
                     
-                    # 2. Exibição na tela (iframe)
-                    base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
-                    st.markdown(pdf_display, unsafe_allow_html=True)
+                    # 2. Exibição na tela (iframe removido por segurança)
+                    st.info("ℹ️ O preview visual foi desativado para evitar bloqueios do navegador. Baixe o arquivo acima para conferir o layout.")
 
             except Exception as e:
                 st.error(f"Erro no preview: {e}")
