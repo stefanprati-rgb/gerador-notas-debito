@@ -209,4 +209,6 @@ __marimo__/
 # Project Specific
 *.zip
 .streamlit/
+INICIAR.BAT
+requirements.txt
 

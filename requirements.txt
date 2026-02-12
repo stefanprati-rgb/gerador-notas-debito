@@ -1,5 +1,0 @@
-streamlit
-pandas
-xhtml2pdf
-Jinja2
-openpyxl
