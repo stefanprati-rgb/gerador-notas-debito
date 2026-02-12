@@ -319,7 +319,6 @@ def generate_pdf(html):
 # UI
 # ==========================================
 st.title("⚡ Hube | Gerador de Notas")
-st.info("Layout Ajustado: Cabeçalho limpo (sem quadrados).")
 
 uploaded_file = st.file_uploader("Upload da Base (.xlsx ou .csv)", type=["xlsx", "csv"])
 
