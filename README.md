@@ -39,25 +39,35 @@ Para que o mapeamento automático funcione sem erros, sua planilha deve conter a
 
 ---
 
-## ⚙️ Configuração Local e Segurança
+## ☁️ Guia de Deploy (Streamlit Cloud)
 
-### 🔒 Sistema de Login
-O aplicativo utiliza o sistema de Segredos (`Secrets`) do Streamlit para autenticação. Para rodar localmente, você deve criar o arquivo `.streamlit/secrets.toml`:
+Este projeto foi desenhado para rodar em ambientes de nuvem, especificamente no Streamlit Cloud.
+
+### Estrutura do Projeto
+O projeto segue uma estrutura modular para facilitar a manutenção e o deploy:
+
+```
+Emissor_Notas_Hube/
+├── config/             # Configurações do sistema
+├── src/                # Código fonte
+│   ├── core/           # Lógica de negócio e utilitários
+│   ├── services/       # Serviços (PDF Engine)
+│   └── interface/      # Interface Streamlit
+├── templates/          # Templates HTML
+├── tests/              # Testes automatizados
+└── requirements.txt    # Dependências Python
+```
+
+### Configuração de Segredos
+O sistema utiliza o gerenciador de segredos do Streamlit. No painel do Streamlit Cloud, configure os segredos da seguinte forma:
 
 ```toml
 [passwords]
 usuario_exemplo = "senha_segura"
 ```
 
-> **Importante**: O arquivo `secrets.toml` está incluído no `.gitignore` para garantir que credenciais nunca sejam compartilhadas publicamente.
-
----
-
-## ☁️ Guia de Deploy (Streamlit Cloud)
-
-Ao realizar o deploy no Streamlit Cloud, o sistema exige dependências de sistema além das bibliotecas Python comuns (como `xhtml2pdf`). 
-
-O arquivo `packages.txt` incluído na raiz do projeto garante a instalação das bibliotecas gráficas necessárias para a renderização do PDF:
+### Dependências de Sistema
+O arquivo `packages.txt` garante a instalação das bibliotecas gráficas necessárias para a renderização do PDF no ambiente Linux do Streamlit Cloud:
 - `libcairo2-dev`
 - `pkg-config`
 - `python3-dev`

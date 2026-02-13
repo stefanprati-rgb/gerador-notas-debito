@@ -1,26 +1,8 @@
 import pandas as pd
 import unicodedata
 import re
-
-# ==========================================
-# UTILITÁRIOS DE DADOS E FORMATAÇÃO
-# ==========================================
-
-# Mapeamento de campos essenciais para validação
-# (Nome Amigável, Lista de Colunas Aceitas)
-REQUIRED_FIELDS = [
-    ("Nome/Razão Social", ['Nome', 'Razão Social', 'Cliente']),
-    ("Endereço", ['Endereço', 'Endereco']),
-    ("Cidade", ['Cidade']),
-    ("UF", ['UF']),
-    ("CNPJ/CPF", ['CNPJ/CPF', 'CNPJ', 'CPF']),
-    ("Conta", ['Número da conta', 'Numero da conta', 'Conta vinculada']),
-    ("Vencimento", ['Vencimento', 'Data Vencimento']),
-    ("Referência", ['Mês de Referência', 'Mes Referencia']),
-    # ("Instalação", ['Instalação', 'Instalacao', 'Numero Instalacao', 'Num. Instalação']), # Opcional / Fallback Index 0
-    ("Total a Pagar", ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total']),
-    ("Dados Bancários", ['Dados bancários', 'Dados bancarios', 'Pagamento']) # ADICIONADO PARA COLUNA AD
-]
+from config.settings import settings
+from src.core.logger import logger
 
 def sanitize_text(text):
     """
@@ -52,7 +34,8 @@ def format_currency(val):
             clean = val_str.replace('R$', '').strip()
             
         return f"R$ {float(clean):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    except:
+    except Exception as e:
+        logger.warning(f"Erro ao formatar moeda '{val}': {e}")
         return str(val)
 
 def parse_currency(val):
@@ -65,28 +48,71 @@ def parse_currency(val):
         elif "," in s:
             s = s.replace(",", ".")
         return float(s)
-    except:
+    except Exception as e:
+        logger.warning(f"Erro ao fazer parse de moeda '{val}': {e}")
         return 0.0
+
+def mask_cpf_cnpj(val):
+    """
+    Mascaramento de CPF/CNPJ seguindo melhores práticas:
+    CPF: ***.***.123-45
+    CNPJ: **.***.***/0001-**
+    """
+    if not val or pd.isna(val):
+        return val
+    
+    clean_val = re.sub(r'\D', '', str(val))
+    
+    if len(clean_val) == 11:  # CPF
+        # Formato: ***.***.890-12
+        return f"***.***.{clean_val[6:9]}-{clean_val[9:]}"
+    elif len(clean_val) == 14:  # CNPJ
+        # Formato: **.***.678/0001-**
+        return f"**.***.{clean_val[5:8]}/{clean_val[8:12]}-**"
+    
+    return val
+
+def mask_name(name):
+    """
+    Mascaramento de Nome:
+    Mantém o primeiro nome e masca o restante.
+    Ex: Stefan Pratti -> Stefan **********
+    """
+    if not name or pd.isna(name) or not isinstance(name, str):
+        return name
+    
+    parts = name.strip().split()
+    if len(parts) <= 1:
+        return name
+    
+    first_name = parts[0]
+    masked_rest = " ".join(["*" * len(p) for p in parts[1:]])
+    return f"{first_name} {masked_rest}"
 
 def clean_filename_text(text):
     if not isinstance(text, str): return ""
     try:
         norm = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII')
         return re.sub(r'[^\w\s-]', '', norm).strip().replace(' ', '_').upper()
-    except: return ""
+    except Exception as e:
+        logger.error(f"Erro ao limpar texto para nome de arquivo '{text}': {e}")
+        return ""
 
 def validate_columns(df):
     """Verifica se as colunas necessárias existem no DataFrame."""
     missing = []
     columns_present = df.columns.tolist()
     
-    for friendly_name, options in REQUIRED_FIELDS:
+    for friendly_name, options in settings.REQUIRED_FIELDS:
         if not any(opt in columns_present for opt in options):
             missing.append(f"{friendly_name} (Colunas aceitas: {', '.join(options)})")
+    
+    if missing:
+        logger.warning(f"Colunas ausentes na validação: {missing}")
             
     return missing
 
-def prepare_context(row):
+def prepare_context(row, mask_data=False):
     """
     Prepara o dicionário de contexto para o Jinja2 e Preview.
     """
@@ -117,6 +143,13 @@ def prepare_context(row):
         # Tenta buscar por nome primeiro
         "dados_bancarios": get(['Dados bancários', 'Dados bancarios', 'Pagamento'], '')
     }
+
+    # Aplica mascaramento se solicitado (Melhores Práticas LGPD)
+    if mask_data:
+        ctx["razao_social"] = mask_name(ctx["razao_social"])
+        ctx["cnpj_consorciado"] = mask_cpf_cnpj(ctx["cnpj_consorciado"])
+        # Endereço também pode conter dados sensíveis, mas manteremos por agora para identificação básica
+        # Se necessário, poderíamos mascarar o número.
     
     # FALLBACK INTELIGENTE: Se não achou por nome, tenta pelo índice 29 (Coluna AD)
     if not ctx["dados_bancarios"] or ctx["dados_bancarios"] == "Não Informado":
