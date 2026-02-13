@@ -4,8 +4,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Caminhos
     BASE_DIR: Path = Path(__file__).resolve().parent.parent
-    TEMPLATES_DIR: Path = BASE_DIR.parent / "templates"
-    LOGS_DIR: Path = BASE_DIR.parent / "logs"
+    TEMPLATES_DIR: Path = BASE_DIR / "templates"
+    LOGS_DIR: Path = BASE_DIR / "logs"
     
     # App Info
     APP_NAME: str = "Hube Emissor"
