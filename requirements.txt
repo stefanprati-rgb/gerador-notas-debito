@@ -1,0 +1,12 @@
+streamlit==1.41.1
+pandas==2.2.3
+xhtml2pdf==0.2.16
+Jinja2==3.1.5
+openpyxl==3.1.5
+python-dateutil==2.9.0.post0
+reportlab==4.2.5
+pycairo==1.27.0
+pydantic-settings>=2.0.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+pytest
