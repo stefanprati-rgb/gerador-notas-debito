@@ -137,9 +137,11 @@
                     <div>
                         <span class="label">DESTINATÁRIO (CONSORCIADO)</span>
                         <div class="value" style="font-size: 10pt;">{{ razao_social }}</div>
-                        <div style="font-size: 9pt;">{{ endereco_consorciado }}</div>
-                        <div style="font-size: 9pt;">CNPJ/CPF: {{ cnpj_consorciado }}</div>
-                        <div style="font-size: 9pt;">Instalação: {{ numero_instalacao }}</div>
+                        <div style="font-size: 9pt; margin-top: 4px;">
+                            {{ endereco_consorciado }}<br>
+                            CNPJ/CPF: {{ cnpj_consorciado }}<br>
+                            <strong>Instalação: {{ numero_instalacao }}</strong>
+                        </div>
                     </div>
                 </td>
                 <td width="40%" style="padding: 8px;">
