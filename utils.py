@@ -17,6 +17,7 @@ REQUIRED_FIELDS = [
     ("Conta", ['Número da conta', 'Numero da conta', 'Conta vinculada']),
     ("Vencimento", ['Vencimento', 'Data Vencimento']),
     ("Referência", ['Mês de Referência', 'Mes Referencia']),
+    # ("Instalação", ['Instalação', 'Instalacao', 'Numero Instalacao', 'Num. Instalação']), # Opcional / Fallback Index 0
     ("Total a Pagar", ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total']),
     ("Dados Bancários", ['Dados bancários', 'Dados bancarios', 'Pagamento']) # ADICIONADO PARA COLUNA AD
 ]
@@ -106,6 +107,7 @@ def prepare_context(row):
         "cnpj_consorciado": get(['CNPJ/CPF', 'CNPJ', 'CPF']),
         "numero_conta": get(['Número da conta', 'Numero da conta', 'Conta vinculada']),
         "numero_cobranca": get(['Nº da cobrança', 'N da cobranca']),
+        "numero_instalacao": get(['Instalação', 'Instalacao', 'Numero Instalacao', 'Num. Instalação']),
         "data_emissao": get(['Data de Emissão', 'Data Emissao']),
         "data_vencimento": get(['Vencimento', 'Data Vencimento']),
         "mes_referencia": get(['Mês de Referência', 'Mes Referencia']),
@@ -123,6 +125,13 @@ def prepare_context(row):
             valor_ad = row.iloc[29]
             if pd.notna(valor_ad):
                 ctx["dados_bancarios"] = sanitize_text(str(valor_ad))
+    
+    # FALLBACK INSTALAÇÃO: Coluna A (Índice 0) se não achou por nome
+    if not ctx["numero_instalacao"]:
+        if len(row) > 0:
+            val_0 = row.iloc[0]
+            if pd.notna(val_0):
+                ctx["numero_instalacao"] = sanitize_text(str(val_0))
                 
     # Se ainda assim estiver vazio, coloca o padrão
     if not ctx["dados_bancarios"]:
