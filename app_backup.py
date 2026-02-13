@@ -139,11 +139,50 @@ if uploaded_file:
         
         template_escolhido = st.selectbox("Modelo de Nota", templates_disponiveis)
 
+        st.write("---")
+        st.subheader("👁️ Visualizar PDF (Teste)")
+        
+        col_prev1, col_prev2 = st.columns([1, 2])
+        with col_prev1:
+            row_idx = st.number_input("Linha para preview (1 a {})".format(len(df)), min_value=1, max_value=len(df), value=1)
+        with col_prev2:
+            st.write("") # Spacer layou
+            st.write("") 
+            btn_preview = st.button("Gerar Preview PDF")
+
+        if btn_preview:
+            try:
+                # Pega a linha (ajustando índice base 0)
+                selected_row = df.iloc[row_idx - 1]
+                
+                # Prepara contexto e HTML
+                ctx = prepare_context(selected_row)
+                html_template_string = get_html_template(template_escolhido)
+                html = Template(html_template_string).render(ctx)
+                
+                # Gera PDF
+                pdf_bytes, err = generate_pdf(html)
+                
+                if err:
+                    st.error(f"Erro ao gerar preview: {err}")
+                else:
+                    st.success("Preview gerado com sucesso!")
+                    
+                    # 1. Download Button
+                    st.download_button(
+                        label="📥 Baixar PDF de Preview",
+                        data=pdf_bytes,
+                        file_name=f"Preview_Linha_{row_idx}.pdf",
+                        mime="application/pdf"
+                    )
+                    
+                    # 2. Exibição na tela (iframe removido por segurança)
+                    st.info("ℹ️ O preview visual foi desativado para evitar bloqueios do navegador. Baixe o arquivo acima para conferir o layout.")
+
+            except Exception as e:
+                st.error(f"Erro no preview: {e}")
 
         st.write("---")
-        
-        # 5. Geração em Lote
-
 
         # Se houver preview, o usuário vê e decide clicar
         if st.button("Gerar Todas as Notas (ZIP)", type="primary"):
