@@ -112,9 +112,21 @@ def prepare_context(row):
         "total_pagar": format_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'], '0')),
         "economia_mes": format_currency(get(['Economia R$', 'Economia mês'], '0')),
         
-        # GARANTE QUE OS DADOS BANCÁRIOS (COLUNA AD) SEJAM MAPEADOS
-        "dados_bancarios": get(['Dados bancários', 'Dados bancarios', 'Pagamento'], 'Não Informado')
+        # Tenta buscar por nome primeiro
+        "dados_bancarios": get(['Dados bancários', 'Dados bancarios', 'Pagamento'], '')
     }
+    
+    # FALLBACK INTELIGENTE: Se não achou por nome, tenta pelo índice 29 (Coluna AD)
+    if not ctx["dados_bancarios"] or ctx["dados_bancarios"] == "Não Informado":
+        if len(row) > 29:
+            # Pega o valor da 30ª coluna (índice 29)
+            valor_ad = row.iloc[29]
+            if pd.notna(valor_ad):
+                ctx["dados_bancarios"] = sanitize_text(str(valor_ad))
+                
+    # Se ainda assim estiver vazio, coloca o padrão
+    if not ctx["dados_bancarios"]:
+        ctx["dados_bancarios"] = "Não Informado"
     
     ctx["_raw_total"] = parse_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'], '0'))
     
