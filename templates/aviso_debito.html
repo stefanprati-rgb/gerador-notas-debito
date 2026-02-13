@@ -143,23 +143,34 @@
                         </div>
                     </div>
                 </td>
-                <td width="40%" style="padding: 8px;">
-                    <div style="margin-bottom: 8px;">
-                        <span class="label">Data Emissão</span>
-                        <span class="value">{{ data_emissao }}</span>
-                    </div>
-                    <div style="margin-bottom: 8px;">
-                        <span class="label">Vencimento</span>
-                        <span class="value" style="font-size: 11pt; color: #cc0000;">{{ data_vencimento }}</span>
-                    </div>
-                    <div>
-                        <span class="label">Referência</span>
-                        <span class="value">{{ mes_referencia }}</span>
-                    </div>
-                    <div style="margin-top: 8px;">
-                        <span class="label">Instalação</span>
-                        <span class="value">{{ numero_instalacao }}</span>
-                    </div>
+                <td width="40%" style="padding: 0; vertical-align: top;">
+                    <!-- Tabela aninhada para garantir espaçamento vertical no xhtml2pdf -->
+                    <table cellpadding="5" cellspacing="0" style="width: 100%;">
+                        <tr>
+                            <td>
+                                <span class="label">Data Emissão</span>
+                                <span class="value">{{ data_emissao }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="label">Vencimento</span>
+                                <span class="value" style="font-size: 11pt; color: #cc0000;">{{ data_vencimento }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="label">Referência</span>
+                                <span class="value">{{ mes_referencia }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border-top: 1px solid #ddd; padding-top: 8px;">
+                                <span class="label" style="font-size: 8pt; color: #000;">NÚMERO DA INSTALAÇÃO</span>
+                                <span class="value" style="font-size: 12pt;">{{ numero_instalacao }}</span>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>
