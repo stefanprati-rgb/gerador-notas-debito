@@ -14,9 +14,9 @@ O projeto segue uma estrutura de **Scripts Modulares** organizada por responsabi
 - **output/**: Destino dos arquivos gerados.
 
 ## Separação de Responsabilidades
-- **app.py**: Orquestração da interface Streamlit e fluxo de usuário.
-- **utils.py**: Funções utilitárias de manipulação de dataframes, formatação de strings e tratamento de dados brutos da planilha.
-- **pdf_engine.py**: Lógica isolada para transformar HTML em PDF, gerenciamento de fontes e estilos CSS.
+- **app.py**: Orquestração da interface Streamlit e fluxo de usuário (mantido na raiz para compatibilidade com Streamlit Cloud).
+- **src/core/utils.py**: Funções utilitárias de manipulação de dataframes, formatação de strings e tratamento de dados brutos da planilha.
+- **src/services/pdf_engine.py**: Lógica isolada para transformar HTML em PDF, gerenciamento de fontes e estilos CSS.
 
 ## Decisões Importantes
 - **xhtml2pdf**: Escolhido pela facilidade de transformar layouts HTML/CSS em PDF, embora possua limitações de CSS moderno.
