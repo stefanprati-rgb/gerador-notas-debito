@@ -113,7 +113,7 @@ def prepare_context(row):
         "economia_mes": format_currency(get(['Economia R$', 'Economia mês'], '0')),
         
         # GARANTE QUE OS DADOS BANCÁRIOS (COLUNA AD) SEJAM MAPEADOS
-        "dados_bancarios": get(['Dados bancários', 'Dados bancarios'], 'Não Informado')
+        "dados_bancarios": get(['Dados bancários', 'Dados bancarios', 'Pagamento'], 'Não Informado')
     }
     
     ctx["_raw_total"] = parse_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'], '0'))
