@@ -99,8 +99,9 @@
             font-size: 10pt;
             font-weight: bold;
             color: #000;
-            white-space: pre-line;
-            /* Mantém quebras de linha se houver no CSV */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            /* Mantém quebras de linha e evita overflow */
         }
     </style>
 </head>
@@ -155,7 +156,8 @@
                         <tr>
                             <td>
                                 <span class="label">Vencimento</span>
-                                <span class="value" style="font-size: 11pt; color: #cc0000;">{{ data_vencimento }}</span>
+                                <span class="value" style="font-size: 11pt; color: #cc0000;">{{ data_vencimento
+                                    }}</span>
                             </td>
                         </tr>
                         <tr>
