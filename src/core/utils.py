@@ -72,14 +72,21 @@ def mask_cpf_cnpj(val):
     
     return val
 
-def mask_name(name):
+def mask_name(name, doc=None):
     """
     Mascaramento de Nome:
-    Mantém o primeiro nome e masca o restante.
+    - Se for PJ (CNPJ detectado no doc), NÃO mascara a Razão Social (dado público).
+    - Se for PF (CPF ou sem doc), mantém o primeiro nome e masca o restante.
     Ex: Stefan Pratti -> Stefan **********
     """
     if not name or pd.isna(name) or not isinstance(name, str):
         return name
+    
+    # Se forneceu documento e ele parece um CNPJ (14 dígitos), retorna nome completo
+    if doc and pd.notna(doc):
+        clean_doc = re.sub(r'\D', '', str(doc))
+        if len(clean_doc) == 14:
+            return name
     
     parts = name.strip().split()
     if len(parts) <= 1:
@@ -145,9 +152,16 @@ def prepare_context(row, mask_data=False):
     }
 
     # Aplica mascaramento se solicitado (Melhores Práticas LGPD)
+    # Aplica mascaramento se solicitado (Melhores Práticas LGPD)
     if mask_data:
-        ctx["razao_social"] = mask_name(ctx["razao_social"])
-        ctx["cnpj_consorciado"] = mask_cpf_cnpj(ctx["cnpj_consorciado"])
+        # Armazena doc original para validação
+        raw_doc = ctx["cnpj_consorciado"]
+        
+        # Passa o documento para decidir se mascara o nome (PJ vs PF)
+        ctx["razao_social"] = mask_name(ctx["razao_social"], doc=raw_doc)
+        
+        # O documento em si continua sendo mascarado parcialmente para segurança visual
+        ctx["cnpj_consorciado"] = mask_cpf_cnpj(raw_doc)
         # Endereço também pode conter dados sensíveis, mas manteremos por agora para identificação básica
         # Se necessário, poderíamos mascarar o número.
     
