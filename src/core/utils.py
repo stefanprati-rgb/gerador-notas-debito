@@ -131,21 +131,36 @@ def prepare_context(row, mask_data=False):
         return default
 
     # Mapeamento
+    # Endereço: tenta Endereço avulso, se não existir usa Endereço Consórcio (modelo GD Gestão)
+    endereco_raw = get(['Endereço', 'Endereco'])
+    if not endereco_raw:
+        endereco_raw = get(['Endereço Consórcio', 'Endereco Consorcio'])
+    
+    # Cidade + UF: monta sufixo só se existirem
+    cidade = get(['Cidade'])
+    uf = get(['UF'])
+    if cidade and uf:
+        endereco_completo = f"{endereco_raw}, {cidade} - {uf}"
+    elif uf:
+        endereco_completo = f"{endereco_raw} - {uf}" if endereco_raw else f"- {uf}"
+    else:
+        endereco_completo = endereco_raw
+
     ctx = {
         "nome_consorcio": get(['Nome Consórcio', 'Nome Consorcio'], 'HUBE ENERGY'),
         "endereco_consorcio": get(['Endereço Consórcio', 'Endereco Consorcio']),
         "cnpj_consorcio": get(['CNPJ Consórcio', 'CNPJ Consorcio']),
-        "razao_social": get(['Nome', 'Razão Social', 'Cliente']),
-        "endereco_consorciado": f"{get(['Endereço','Endereco'])}, {get(['Cidade'])} - {get(['UF'])}",
+        "razao_social": get(['Nome', 'Razão Social', 'Razao Social', 'Cliente']),
+        "endereco_consorciado": endereco_completo,
         "cnpj_consorciado": get(['CNPJ/CPF', 'CNPJ', 'CPF']),
         "numero_conta": get(['Número da conta', 'Numero da conta', 'Conta vinculada']),
         "numero_cobranca": get(['Nº da cobrança', 'N da cobranca']),
         "numero_instalacao": get(['Instalação', 'Instalacao', 'Numero Instalacao', 'Num. Instalação']),
         "data_emissao": get(['Data de Emissão', 'Data Emissao']),
         "data_vencimento": get(['Vencimento', 'Data Vencimento']),
-        "mes_referencia": get(['Mês de Referência', 'Mes Referencia']),
-        "total_pagar": format_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'], '0')),
-        "economia_mes": format_currency(get(['Economia R$', 'Economia mês'], '0')),
+        "mes_referencia": get(['Mês de Referência', 'Mes Referencia', 'Referencia']),
+        "total_pagar": format_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total'], '0')),
+        "economia_mes": format_currency(get(['Economia R$', 'Economia mês', 'ECONOMIA'], '0')),
         
         # Tenta buscar por nome primeiro
         "dados_bancarios": get(['Dados bancários', 'Dados bancarios', 'Pagamento'], '')
@@ -184,6 +199,6 @@ def prepare_context(row, mask_data=False):
     if not ctx["dados_bancarios"]:
         ctx["dados_bancarios"] = "Não Informado"
     
-    ctx["_raw_total"] = parse_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'], '0'))
+    ctx["_raw_total"] = parse_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total'], '0'))
     
     return ctx

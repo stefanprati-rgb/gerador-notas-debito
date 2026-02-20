@@ -15,17 +15,18 @@ class Settings(BaseSettings):
     DEFAULT_ENCODING: str = "utf-8"
     
     # Required Columns for Validation
+    # Aliases expandidos para suportar diferentes modelos de planilha (ex: GD Gestão)
     REQUIRED_FIELDS: list = [
-        ("Nome/Razão Social", ['Nome', 'Razão Social', 'Cliente']),
-        ("Endereço", ['Endereço', 'Endereco']),
-        ("Cidade", ['Cidade']),
+        ("Nome/Razão Social", ['Nome', 'Razão Social', 'Razao Social', 'Cliente']),
+        ("Endereço", ['Endereço', 'Endereco', 'Endereço Consórcio', 'Endereco Consorcio']),
+        # Cidade removida — já vem embutida no endereço completo em alguns modelos
         ("UF", ['UF']),
         ("CNPJ/CPF", ['CNPJ/CPF', 'CNPJ', 'CPF']),
         ("Conta", ['Número da conta', 'Numero da conta', 'Conta vinculada']),
-        ("Vencimento", ['Vencimento', 'Data Vencimento']),
-        ("Referência", ['Mês de Referência', 'Mes Referencia']),
+        # Vencimento removido — tratado na UI (usuário pode informar manualmente)
+        ("Referência", ['Mês de Referência', 'Mes Referencia', 'Referencia']),
         # ("Instalação", ['Instalação', 'Instalacao', 'Numero Instalacao', 'Num. Instalação']), # Opcional / Fallback Index 0
-        ("Total a Pagar", ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total']),
+        ("Total a Pagar", ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total']),
         ("Dados Bancários", ['Dados bancários', 'Dados bancarios', 'Pagamento'])
     ]
 

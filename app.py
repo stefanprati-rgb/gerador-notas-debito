@@ -101,10 +101,27 @@ if uploaded_file:
 
         st.success("✅ Estrutura do arquivo validada com sucesso!")
 
-        # 2. Resumo Financeiro (Conferência)
+        # 2a. Verificação de coluna Vencimento — se não existir, solicita ao usuário
+        col_vencimento = next((c for c in ['Vencimento', 'Data Vencimento'] if c in df.columns), None)
+        vencimento_manual = None
+        if not col_vencimento:
+            st.warning("⚠️ A planilha não possui coluna de **Vencimento**.")
+            vencimento_manual = st.date_input(
+                "Informe a data de vencimento (ou deixe em branco para seguir sem):",
+                value=None,
+                format="DD/MM/YYYY",
+                help="Esta data será aplicada a todas as notas geradas"
+            )
+            if vencimento_manual:
+                df['Vencimento'] = vencimento_manual.strftime('%d/%m/%Y')
+                st.info(f"📅 Vencimento definido para todas as notas: **{vencimento_manual.strftime('%d/%m/%Y')}**")
+            else:
+                st.info("ℹ️ Seguindo sem data de vencimento.")
+
+        # 2b. Resumo Financeiro (Conferência)
         # Vamos calcular o total baseado no parsing da coluna 'Total a pagar' (ou similar)
         # Identifica qual coluna de total existe
-        col_total = next((c for c in ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Total'] if c in df.columns), None)
+        col_total = next((c for c in ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total'] if c in df.columns), None)
         
         total_consolidado = 0.0
         if col_total:
