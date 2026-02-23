@@ -162,8 +162,8 @@ def prepare_context(row, mask_data=False):
         "total_pagar": format_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total'], '0')),
         "economia_mes": format_currency(get(['Economia R$', 'Economia mês', 'ECONOMIA'], '0')),
         
-        # Tenta buscar por nome primeiro
-        "dados_bancarios": get(['Dados bancários', 'Dados bancarios', 'Pagamento'], '')
+        # Tenta buscar por nome de coluna primeiro; aceita também Número da conta como alias
+        "dados_bancarios": get(['Dados bancários', 'Dados bancarios', 'Pagamento', 'Número da conta', 'Numero da conta'], '')
     }
 
     # Aplica mascaramento se solicitado (Melhores Práticas LGPD)

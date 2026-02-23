@@ -27,7 +27,7 @@ class Settings(BaseSettings):
         ("Referência", ['Mês de Referência', 'Mes Referencia', 'Referencia']),
         # ("Instalação", ['Instalação', 'Instalacao', 'Numero Instalacao', 'Num. Instalação']), # Opcional / Fallback Index 0
         ("Total a Pagar", ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total']),
-        ("Dados Bancários", ['Dados bancários', 'Dados bancarios', 'Pagamento'])
+        ("Dados Bancários", ['Dados bancários', 'Dados bancarios', 'Pagamento', 'Número da conta', 'Numero da conta'])
     ]
 
     class Config:
