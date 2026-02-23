@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 import zipfile
-from datetime import datetime
+from datetime import datetime, date
 from jinja2 import Template
 
 # Importando módulos refatorados
@@ -104,7 +104,20 @@ if uploaded_file:
         # 2a. Verificação de coluna Vencimento — se não existir, solicita ao usuário
         col_vencimento = next((c for c in ['Vencimento', 'Data Vencimento'] if c in df.columns), None)
         vencimento_manual = None
+
+        def _parse_date(val):
+            """Tenta converter string para date; retorna None se falhar."""
+            for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%Y/%m/%d'):
+                try:
+                    return datetime.strptime(str(val).strip(), fmt).date()
+                except Exception:
+                    pass
+            return None
+
+        hoje = date.today()
+
         if not col_vencimento:
+            # ── Caso B: data informada manualmente ──────────────────────────
             st.warning("⚠️ A planilha não possui coluna de **Vencimento**.")
             vencimento_manual = st.date_input(
                 "Informe a data de vencimento (ou deixe em branco para seguir sem):",
@@ -113,10 +126,67 @@ if uploaded_file:
                 help="Esta data será aplicada a todas as notas geradas"
             )
             if vencimento_manual:
+                if vencimento_manual < hoje:
+                    st.warning(f"⚠️ A data informada (**{vencimento_manual.strftime('%d/%m/%Y')}**) já passou!")
+                    opcao_manual = st.radio(
+                        "O que deseja fazer?",
+                        ["Prosseguir assim mesmo", "Informar outra data"],
+                        key="radio_venc_manual",
+                        horizontal=True
+                    )
+                    if opcao_manual == "Informar outra data":
+                        vencimento_manual = st.date_input(
+                            "Nova data de vencimento:",
+                            value=hoje,
+                            format="DD/MM/YYYY",
+                            key="nova_data_manual"
+                        )
                 df['Vencimento'] = vencimento_manual.strftime('%d/%m/%Y')
                 st.info(f"📅 Vencimento definido para todas as notas: **{vencimento_manual.strftime('%d/%m/%Y')}**")
             else:
                 st.info("ℹ️ Seguindo sem data de vencimento.")
+
+        else:
+            # ── Caso A: coluna presente — verificar linha a linha ────────────
+            linhas_expiradas = []
+            for idx, row in df.iterrows():
+                val = row.get(col_vencimento, None)
+                if pd.isna(val) or str(val).strip() == '':
+                    continue
+                d = _parse_date(val)
+                if d and d < hoje:
+                    nome_col = next(
+                        (c for c in ['Nome', 'Razão Social', 'Razao Social', 'Cliente'] if c in df.columns),
+                        None
+                    )
+                    razao = str(row[nome_col]) if nome_col else f"Linha {idx + 2}"
+                    linhas_expiradas.append({
+                        "Linha": idx + 2,
+                        "Razão Social": razao,
+                        "Vencimento": d.strftime('%d/%m/%Y')
+                    })
+
+            if linhas_expiradas:
+                st.warning(f"⚠️ **{len(linhas_expiradas)}** nota(s) possuem data de vencimento já expirada:")
+                st.dataframe(pd.DataFrame(linhas_expiradas), use_container_width=True, hide_index=True)
+
+                opcao_col = st.radio(
+                    "O que deseja fazer?",
+                    ["Prosseguir com as datas originais", "Substituir datas expiradas por uma nova data"],
+                    key="radio_venc_col",
+                    horizontal=True
+                )
+                if opcao_col == "Substituir datas expiradas por uma nova data":
+                    nova_data = st.date_input(
+                        "Nova data de vencimento (será aplicada apenas às notas expiradas):",
+                        value=hoje,
+                        format="DD/MM/YYYY",
+                        key="nova_data_col"
+                    )
+                    # Substitui apenas as linhas expiradas
+                    indices_expirados = [r["Linha"] - 2 for r in linhas_expiradas]
+                    df.loc[indices_expirados, col_vencimento] = nova_data.strftime('%d/%m/%Y')
+                    st.info(f"📅 {len(linhas_expiradas)} data(s) substituída(s) para: **{nova_data.strftime('%d/%m/%Y')}**")
 
         # 2b. Resumo Financeiro (Conferência)
         # Vamos calcular o total baseado no parsing da coluna 'Total a pagar' (ou similar)
