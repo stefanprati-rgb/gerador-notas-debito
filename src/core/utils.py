@@ -1,6 +1,7 @@
 import pandas as pd
 import unicodedata
 import re
+from datetime import datetime
 from config.settings import settings
 from src.core.logger import logger
 
@@ -146,6 +147,10 @@ def prepare_context(row, mask_data=False):
     else:
         endereco_completo = endereco_raw
 
+    data_em_raw = get(['Data de Emissão', 'Data Emissao'])
+    if not data_em_raw:
+        data_em_raw = datetime.now().strftime("%d/%m/%Y")
+
     ctx = {
         "nome_consorcio": get(['Nome Consórcio', 'Nome Consorcio'], 'HUBE ENERGY'),
         "endereco_consorcio": get(['Endereço Consórcio', 'Endereco Consorcio']),
@@ -156,7 +161,7 @@ def prepare_context(row, mask_data=False):
         "numero_conta": get(['Número da conta', 'Numero da conta', 'Conta vinculada']),
         "numero_cobranca": get(['Nº da cobrança', 'N da cobranca']),
         "numero_instalacao": get(['Instalação', 'Instalacao', 'Numero Instalacao', 'Num. Instalação']),
-        "data_emissao": get(['Data de Emissão', 'Data Emissao']),
+        "data_emissao": data_em_raw,
         "data_vencimento": get(['Vencimento', 'Data Vencimento']),
         "mes_referencia": get(['Mês de Referência', 'Mes Referencia', 'Referencia']),
         "total_pagar": format_currency(get(['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total'], '0')),
