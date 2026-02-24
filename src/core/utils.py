@@ -152,7 +152,7 @@ def prepare_context(row, mask_data=False):
         data_em_raw = datetime.now().strftime("%d/%m/%Y")
 
     ctx = {
-        "nome_consorcio": get(['Nome Consórcio', 'Nome Consorcio'], 'HUBE ENERGY'),
+        "nome_consorcio": get(['Nome Consórcio', 'Nome Consorcio']),
         "endereco_consorcio": get(['Endereço Consórcio', 'Endereco Consorcio']),
         "cnpj_consorcio": get(['CNPJ Consórcio', 'CNPJ Consorcio']),
         "razao_social": get(['Nome', 'Razão Social', 'Razao Social', 'Cliente']),
