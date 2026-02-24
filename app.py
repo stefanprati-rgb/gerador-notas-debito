@@ -12,7 +12,8 @@ from src.core.utils import (
     parse_currency,
     clean_filename_text,
     validate_columns,
-    prepare_context
+    prepare_context,
+    find_column_in_df
 )
 from src.services.pdf_engine import get_html_template, generate_pdf, list_templates
 from src.core.logger import logger
@@ -102,7 +103,7 @@ if uploaded_file:
         st.success("✅ Estrutura do arquivo validada com sucesso!")
 
         # 2a. Verificação de coluna Vencimento — se não existir, solicita ao usuário
-        col_vencimento = next((c for c in ['Vencimento', 'Data Vencimento'] if c in df.columns), None)
+        col_vencimento = find_column_in_df(df, ['Vencimento', 'Data Vencimento'])
         vencimento_manual = None
 
         def _parse_date(val):
@@ -155,10 +156,7 @@ if uploaded_file:
                     continue
                 d = _parse_date(val)
                 if d and d < hoje:
-                    nome_col = next(
-                        (c for c in ['Nome', 'Razão Social', 'Razao Social', 'Cliente'] if c in df.columns),
-                        None
-                    )
+                    nome_col = find_column_in_df(df, ['Nome', 'Razão Social', 'Razao Social', 'Cliente'])
                     razao = str(row[nome_col]) if nome_col else f"Linha {idx + 2}"
                     linhas_expiradas.append({
                         "Linha": idx + 2,
@@ -191,7 +189,7 @@ if uploaded_file:
         # 2b. Resumo Financeiro (Conferência)
         # Vamos calcular o total baseado no parsing da coluna 'Total a pagar' (ou similar)
         # Identifica qual coluna de total existe
-        col_total = next((c for c in ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total'] if c in df.columns), None)
+        col_total = find_column_in_df(df, ['Total a pagar', 'Total calculado R$', 'Valor consolidado', 'Valor emitido', 'Total'])
         
         total_consolidado = 0.0
         if col_total:

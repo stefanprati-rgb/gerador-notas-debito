@@ -106,13 +106,28 @@ def clean_filename_text(text):
         logger.error(f"Erro ao limpar texto para nome de arquivo '{text}': {e}")
         return ""
 
+def normalize_col_name(text):
+    """Remove espaços, acentos, caracteres especiais e transforma em minúsculas."""
+    if not isinstance(text, str): return ""
+    norm = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII')
+    return re.sub(r'[^a-z0-9]', '', norm.lower())
+
+def find_column_in_df(df, options):
+    """Encontra o nome real da coluna no DataFrame com base em uma lista de opções permitidas (ignora formatação)."""
+    normalized_cols = {normalize_col_name(c): c for c in df.columns}
+    for opt in options:
+        norm_opt = normalize_col_name(opt)
+        if norm_opt in normalized_cols:
+            return normalized_cols[norm_opt]
+    return None
+
 def validate_columns(df):
     """Verifica se as colunas necessárias existem no DataFrame."""
     missing = []
-    columns_present = df.columns.tolist()
     
     for friendly_name, options in settings.REQUIRED_FIELDS:
-        if not any(opt in columns_present for opt in options):
+        found_col = find_column_in_df(df, options)
+        if not found_col:
             missing.append(f"{friendly_name} (Colunas aceitas: {', '.join(options)})")
     
     if missing:
@@ -124,11 +139,17 @@ def prepare_context(row, mask_data=False):
     """
     Prepara o dicionário de contexto para o Jinja2 e Preview.
     """
+    normalized_index = {normalize_col_name(c): c for c in row.index}
+
     def get(keys, default=""):
         for key in keys:
-            if key in row.index and pd.notna(row[key]):
-                raw_val = str(row[key]).replace('\n', ' ')
-                return sanitize_text(raw_val)
+            norm_key = normalize_col_name(key)
+            if norm_key in normalized_index:
+                actual_key = normalized_index[norm_key]
+                val = row[actual_key]
+                if pd.notna(val) and str(val).strip() != "":
+                    raw_val = str(val).replace('\n', ' ')
+                    return sanitize_text(raw_val)
         return default
 
     # Mapeamento
@@ -152,7 +173,7 @@ def prepare_context(row, mask_data=False):
         data_em_raw = datetime.now().strftime("%d/%m/%Y")
 
     ctx = {
-        "nome_consorcio": get(['Nome Consórcio', 'Nome Consorcio']),
+        "nome_consorcio": get(['Nome Consórcio', 'Nome Consorcio', 'Consórcio', 'Consorcio']),
         "endereco_consorcio": get(['Endereço Consórcio', 'Endereco Consorcio']),
         "cnpj_consorcio": get(['CNPJ Consórcio', 'CNPJ Consorcio']),
         "razao_social": get(['Nome', 'Razão Social', 'Razao Social', 'Cliente']),
