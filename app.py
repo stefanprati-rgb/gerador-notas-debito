@@ -222,8 +222,8 @@ if uploaded_file:
             
             sucesso = sum(1 for r in relatorio if r['status'] == 'SUCESSO')
             if sucesso > 0:
-                st.balloons()
-                st.success(f"🎉 {sucesso} notas geradas com sucesso!")
+                st.toast(f"🎉 {sucesso} notas geradas com sucesso!", icon="✅")
+                st.success(f"✅ Geração concluída: {sucesso} notas prontas para download.")
                 st.download_button(
                     label=f"📥 Baixar {sucesso} Notas (.zip)",
                     data=zip_buffer,
