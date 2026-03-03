@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, date
+import json
+from datetime import datetime, date, timedelta
 from jinja2 import Template
+from streamlit_cookies_controller import CookieController
 
 # Importando módulos refatorados
 from src.core.utils import (
@@ -21,6 +23,26 @@ from src.core.logger import logger
 from config.settings import settings
 
 # ==========================================
+# 🍪 PERSISTÊNCIA (COOKIES)
+# ==========================================
+controller = CookieController()
+
+def get_saved_prefs():
+    """Recupera preferências salvas nos cookies."""
+    prefs = controller.get("hube_user_prefs")
+    if prefs:
+        try:
+            return json.loads(prefs) if isinstance(prefs, str) else prefs
+        except:
+            return {}
+    return {}
+
+def save_prefs(template, lgpd):
+    """Salva preferências nos cookies."""
+    prefs = {"template": template, "lgpd": lgpd}
+    controller.set("hube_user_prefs", json.dumps(prefs))
+
+# ==========================================
 # CONFIGURAÇÃO VISUAL
 # ==========================================
 st.set_page_config(page_title=settings.APP_NAME, layout="centered", page_icon="⚡")
@@ -29,19 +51,40 @@ st.set_page_config(page_title=settings.APP_NAME, layout="centered", page_icon="�
 # 🔒 SISTEMA DE LOGIN SEGURO
 # ==========================================
 def check_password():
-    """Retorna True se o login for bem-sucedido."""
+    """Retorna True se o login for bem-sucedido ou se houver cookie válido."""
+    
+    # 1. Verifica se já está logado na sessão ou via cookie
     if st.session_state.get("password_correct", False):
         return True
+    
+    auth_cookie = controller.get("hube_auth_user")
+    if auth_cookie:
+        try:
+            secrets_pass = st.secrets.get("passwords", {})
+            user, token = auth_cookie.split("|")
+            # O token é apenas a senha em texto plano (simples para este caso)
+            if user in secrets_pass and secrets_pass[user] == token:
+                st.session_state["password_correct"] = True
+                logger.info(f"Auto-login bem-sucedido para: {user}")
+                return True
+        except:
+            pass
 
     st.markdown("### 🔒 Acesso Restrito - Hube Energy")
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
+    lembrar = st.checkbox("Lembrar-me neste navegador", value=True)
 
     if st.button("Entrar"):
         try:
             secrets_pass = st.secrets.get("passwords", {})
             if usuario in secrets_pass and secrets_pass[usuario] == senha:
                 st.session_state["password_correct"] = True
+                if lembrar:
+                    # Cookie expira em 30 dias
+                    val = f"{usuario}|{senha}"
+                    controller.set("hube_auth_user", val)
+                
                 logger.info(f"Login bem-sucedido para usuário: {usuario}")
                 st.success("Logado com sucesso!")
                 st.rerun()
@@ -56,6 +99,9 @@ def check_password():
 
 if not check_password():
     st.stop()
+
+# Carrega preferências salvas
+saved_prefs = get_saved_prefs()
 
 st.markdown("""
 <style>
@@ -123,7 +169,9 @@ if uploaded_file:
 
         # 3. Proteção LGPD & Preview
         st.write("---")
-        ativar_lgpd = st.toggle("Ativar Mascaramento (LGPD)", value=True)
+        # Recupera valor salvo ou usa True como default
+        default_lgpd = saved_prefs.get("lgpd", True)
+        ativar_lgpd = st.toggle("Ativar Mascaramento (LGPD)", value=default_lgpd)
         
         st.subheader("🔍 Pré-visualização")
         preview = [prepare_context(row, mask_data=ativar_lgpd) for _, row in df.head(5).iterrows()]
@@ -136,7 +184,18 @@ if uploaded_file:
              st.error("Nenhum template encontrado na pasta templates/!")
              st.stop()
         
-        template_escolhido = st.selectbox("Modelo de Nota", templates)
+        # Recupera index do template salvo ou 0
+        default_template = saved_prefs.get("template", templates[0])
+        try:
+            template_idx = templates.index(default_template)
+        except:
+            template_idx = 0
+            
+        template_escolhido = st.selectbox("Modelo de Nota", templates, index=template_idx)
+
+        # Salva preferências sempre que mudarem (no próximo rerun)
+        if template_escolhido != default_template or ativar_lgpd != default_lgpd:
+            save_prefs(template_escolhido, ativar_lgpd)
 
         if st.button("Gerar Todas as Notas (ZIP)", type="primary"):
             html_str = get_html_template(template_escolhido)
