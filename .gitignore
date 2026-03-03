@@ -211,3 +211,6 @@ __marimo__/
 .streamlit/
 INICIAR.BAT
 
+# Data files
+*.xlsx
+*.csv

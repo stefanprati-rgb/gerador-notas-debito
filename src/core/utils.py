@@ -1,11 +1,12 @@
 import pandas as pd
 import unicodedata
 import re
-from datetime import datetime
+from datetime import datetime, date
+from typing import Any, Optional
 from config.settings import settings
 from src.core.logger import logger
 
-def sanitize_text(text):
+def sanitize_text(text: Any) -> str:
     """
     Limpa caracteres especiais e normaliza unicode para evitar erros no xhtml2pdf.
     """
@@ -22,7 +23,7 @@ def sanitize_text(text):
     
     return clean.strip()
 
-def format_currency(val):
+def format_currency(val: Any) -> str:
     try:
         if pd.isna(val) or str(val).strip() == "": return "R$ 0,00"
         val_str = str(val).strip()
@@ -39,7 +40,7 @@ def format_currency(val):
         logger.warning(f"Erro ao formatar moeda '{val}': {e}")
         return str(val)
 
-def parse_currency(val):
+def parse_currency(val: Any) -> float:
     """Converte string de moeda para float para cálculos."""
     try:
         if pd.isna(val): return 0.0
@@ -53,14 +54,14 @@ def parse_currency(val):
         logger.warning(f"Erro ao fazer parse de moeda '{val}': {e}")
         return 0.0
 
-def mask_cpf_cnpj(val):
+def mask_cpf_cnpj(val: Any) -> str:
     """
     Mascaramento de CPF/CNPJ seguindo melhores práticas:
     CPF: ***.***.123-45
     CNPJ: **.***.***/0001-**
     """
     if not val or pd.isna(val):
-        return val
+        return str(val) if pd.notna(val) else ""
     
     clean_val = re.sub(r'\D', '', str(val))
     
@@ -71,9 +72,9 @@ def mask_cpf_cnpj(val):
         # Formato: **.***.678/0001-**
         return f"**.***.{clean_val[5:8]}/{clean_val[8:12]}-**"
     
-    return val
+    return str(val)
 
-def mask_name(name, doc=None):
+def mask_name(name: Any, doc: Any = None) -> str:
     """
     Mascaramento de Nome:
     - Se for PJ (CNPJ detectado no doc), NÃO mascara a Razão Social (dado público).
@@ -81,7 +82,7 @@ def mask_name(name, doc=None):
     Ex: Stefan Pratti -> Stefan **********
     """
     if not name or pd.isna(name) or not isinstance(name, str):
-        return name
+        return str(name) if pd.notna(name) else ""
     
     # Se forneceu documento e ele parece um CNPJ (14 dígitos), retorna nome completo
     if doc and pd.notna(doc):
@@ -97,7 +98,7 @@ def mask_name(name, doc=None):
     masked_rest = " ".join(["*" * len(p) for p in parts[1:]])
     return f"{first_name} {masked_rest}"
 
-def clean_filename_text(text):
+def clean_filename_text(text: Any) -> str:
     if not isinstance(text, str): return ""
     try:
         norm = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII')
@@ -106,13 +107,13 @@ def clean_filename_text(text):
         logger.error(f"Erro ao limpar texto para nome de arquivo '{text}': {e}")
         return ""
 
-def normalize_col_name(text):
+def normalize_col_name(text: Any) -> str:
     """Remove espaços, acentos, caracteres especiais e transforma em minúsculas."""
     if not isinstance(text, str): return ""
     norm = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII')
     return re.sub(r'[^a-z0-9]', '', norm.lower())
 
-def find_column_in_df(df, options):
+def find_column_in_df(df: pd.DataFrame, options: list[str]) -> Optional[str]:
     """Encontra o nome real da coluna no DataFrame com base em uma lista de opções permitidas (ignora formatação)."""
     normalized_cols = {normalize_col_name(c): c for c in df.columns}
     for opt in options:
@@ -121,7 +122,7 @@ def find_column_in_df(df, options):
             return normalized_cols[norm_opt]
     return None
 
-def validate_columns(df):
+def validate_columns(df: pd.DataFrame) -> list[str]:
     """Verifica se as colunas necessárias existem no DataFrame."""
     missing = []
     
@@ -135,13 +136,28 @@ def validate_columns(df):
             
     return missing
 
-def prepare_context(row, mask_data=False):
+def parse_date(val: Any) -> Optional[date]:
+    """Tenta converter string ou objeto para date; retorna None se falhar."""
+    if pd.isna(val) or str(val).strip() == '':
+        return None
+    
+    if isinstance(val, (date, datetime)):
+        return val.date() if isinstance(val, datetime) else val
+
+    for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%Y/%m/%d'):
+        try:
+            return datetime.strptime(str(val).strip(), fmt).date()
+        except (ValueError, TypeError):
+            pass
+    return None
+
+def prepare_context(row: pd.Series, mask_data: bool = False) -> dict[str, Any]:
     """
     Prepara o dicionário de contexto para o Jinja2 e Preview.
     """
     normalized_index = {normalize_col_name(c): c for c in row.index}
 
-    def get(keys, default=""):
+    def get(keys: list[str], default: str = "") -> str:
         for key in keys:
             norm_key = normalize_col_name(key)
             if norm_key in normalized_index:
@@ -193,7 +209,6 @@ def prepare_context(row, mask_data=False):
     }
 
     # Aplica mascaramento se solicitado (Melhores Práticas LGPD)
-    # Aplica mascaramento se solicitado (Melhores Práticas LGPD)
     if mask_data:
         # Armazena doc original para validação
         raw_doc = ctx["cnpj_consorciado"]
@@ -203,8 +218,6 @@ def prepare_context(row, mask_data=False):
         
         # O documento em si continua sendo mascarado parcialmente para segurança visual
         ctx["cnpj_consorciado"] = mask_cpf_cnpj(raw_doc)
-        # Endereço também pode conter dados sensíveis, mas manteremos por agora para identificação básica
-        # Se necessário, poderíamos mascarar o número.
     
     # FALLBACK INTELIGENTE: Se não achou por nome, tenta pelo índice 29 (Coluna AD)
     if not ctx["dados_bancarios"] or ctx["dados_bancarios"] == "Não Informado":

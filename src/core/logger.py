@@ -1,5 +1,6 @@
 import logging
 import sys
+import re
 from pathlib import Path
 from config.settings import settings
 
@@ -37,7 +38,6 @@ def setup_logger(name: str = "app_logger"):
             record.msg = msg
             return True
 
-    import re
     lgpd_filter = SensitiveDataFilter()
 
     # Evita duplicidade de handlers se a função for chamada múltiplas vezes
